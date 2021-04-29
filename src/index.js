@@ -6,13 +6,18 @@ const app = express();
 app.use(express.json());
 const customers = [];
 
+//middleware
+function verifyIfExistsAccountCPF(request, response, next){
+    const {cpf} = request.headers;
+    const customer = customers.find(customer => customer.cpf === cpf);
+    if(!customer){
+        return response.status(400).json({error:"NÃO ACHEI"})
+    }
+    request.customer = customer;
+    return next();
+}
 
-/**
- * cpf -string
- * name - string
- * id - uuid
- * statement - array []
- */
+
 app.post("/account", (request, response)=>{
     const {cpf, name} = request.body;
    
@@ -32,16 +37,12 @@ app.post("/account", (request, response)=>{
     return response.status(201).send();
 })
 
-app.get("/statement", (request, response) =>{
-    const {cpf} = request.headers;
-    const customer = customers.find(customer => customer.cpf === cpf);
+app.use(verifyIfExistsAccountCPF);
 
+app.get("/statement", verifyIfExistsAccountCPF,  (request, response) =>{
+    
 
-    if(!customer){
-        return response.status(400).json({error:"NÃO ACHEI"})
-    }
-
-        return response.json(customer.statement);
+       
 })
 
 app.listen(3334)
